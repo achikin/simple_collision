@@ -1,7 +1,7 @@
 'use strict';
 var canvas = document.getElementById("example");
 var snd = new Audio("laser.mp3");
-function playsnd() {
+function play_snd() {
     snd.currentTime = 0;
     snd.play();
 }
@@ -15,9 +15,9 @@ var hero = {
 }
 
 function keydownUp() {
-  hero.v.y -= hero.throttle;
-  if (Math.abs(hero.v.y) > hero.maxspeed) {
-     hero.v.y = hero.maxspeed * (hero.v.y < 0)? -1:1;
+  hero.v.y -= 20;
+  if (Math.abs(hero.v.y) > 20) {
+     hero.v.y = 20 * (hero.v.y < 0)? -1:1;
   }
 }
 function keydownDown() {
@@ -51,7 +51,6 @@ function keydownX() {}
 function keyupZ() {}
 function keyupX() {}
 function keyupUp(){
-  hero.v.y = 0;
 }
 function keyupDown(){
   hero.v.y = 0;
@@ -80,10 +79,12 @@ var x = 0;
 var vel = 0.1;
 var t_prev = 0;
 var objects = [{pos:{x:200,y:100}, w:100, h: 50}];
+objects.push({pos:{x:10, y:300}, w:700, h:30});
 hero.pos.x = 20;
 hero.pos.y = 100;
 hero.w = 20;
 hero.h = 40;
+hero.v.y = 2;
 function draw_entity(ctx,entity) {
   ctx.strokeRect(entity.pos.x, entity.pos.y, entity.w, entity.h);
 }
@@ -102,21 +103,24 @@ function update(t) {
     var delta = t - t_prev;
     t_prev = t;
     hero.pos.x = hero.pos.x + hero.v.x;
-    if (collides(hero, objects[0])) {
-      check_x_velocity(hero, objects[0], hero.v);
+    for (var i = 0; i < objects.length; i++) {
+      if (collides(hero, objects[i])) {
+        check_x_velocity(hero, objects[i], hero.v);
+      }
     }
     hero.pos.y = hero.pos.y + hero.v.y;
-    if (collides(hero, objects[0])) {
-      check_y_velocity(hero, objects[0], hero.v);
+    for (var i = 0; i < objects.length; i++) {
+     if (collides(hero, objects[i])) {
+       check_y_velocity(hero, objects[i], hero.v);
+     }
+    }
+    for(var i = 0; i < objects.length; i++) {
+      draw_entity(ctx, objects[i]);
     }
     draw_entity(ctx, hero);
     draw_v(ctx, hero);
-    draw_entity(ctx, objects[0]);
-    if (collides(hero, objects[0])){
-      ctx.strokeStyle="#FF0000";
-      ctx.strokeRect(hero.pos.x, hero.pos.y, hero.w, hero.h);
-      ctx.strokeStyle="#000000"
-    }
+    hero.v.y += 2;
+    if (hero.v.y > 2) hero.v.y = 2;
     window.requestAnimationFrame(update);
 }
 
