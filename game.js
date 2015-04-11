@@ -12,19 +12,27 @@ function clamp_speed(current, max) {
     //console.log('final ' + Math.min(Math.abs(current),max));
     return Math.min(Math.abs(current),max) * (current > 0 ? 1 : -1);
 }
+function clamp_y_speed(current, up, down) {
+    if (current > 0) {
+        return clamp_speed(current, down);
+    } else {
+        return clamp_speed(current, up);
+    }
+}
 function keydownUp() {
   hero.speed.v.y -= hero.speed.a.y;
-  hero.speed.v.y = clamp_speed(hero.speed.v.y, hero.speed.max.y);
+  hero.speed.v.y = clamp_y_speed(hero.speed.v.y, hero.speed.max.y.up,       hero.speed.max.y.down);
+    console.log(hero.spee)
 }
 function keydownDown() {
 }
 function keydownLeft() {
     hero.speed.v.x -= hero.speed.a.x;
-    hero.speed.v.x = clamp_speed(hero.speed.v.x, hero.speed.max.x);
+    //hero.speed.v.x = clamp_speed(hero.speed.v.x, hero.speed.max.x);
 }
 function keydownRight() {
     hero.speed.v.x += hero.speed.a.x;
-    hero.speed.v.x = clamp_speed(hero.speed.v.x, hero.speed.max.x);
+    //hero.speed.v.x = clamp_speed(hero.speed.v.x, hero.speed.max.x);
 }
 
 function keyupLeft() {}
@@ -80,12 +88,12 @@ function update(t) {
     ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
     var delta = t - t_prev;
     t_prev = t;
-    hero.speed.v.y += 2;
-    hero.speed.v.y = clamp_speed(hero.speed.v.y, hero.speed.max.y);
-    var direction = hero.speed.x > 0 ? 1 : -1;
-    //console.log(hero.speed.v.x);
-    hero.speed.v.x = Math.abs(hero.speed.v.x) - hero.speed.a.x;
-    //console.log(hero.speed.v.x);
+    hero.speed.v.y += hero.speed.d.y;
+    hero.speed.v.y = clamp_y_speed(hero.speed.v.y, hero.speed.max.y.up, hero.speed.max.y.down);
+    console.log(hero.speed.v.y);
+    
+    var direction = (hero.speed.x > 0) ? 1 : -1;
+    hero.speed.v.x = Math.abs(hero.speed.v.x) - hero.speed.d.x;
     if (hero.speed.v.x < 0) {
         hero.speed.v.x = 0;
     } else {
