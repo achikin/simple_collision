@@ -27,19 +27,6 @@ function check_y_velocity(b1, b2, v) {
         b1.pos.y = b2.pos.y + b2.h + 1;
     }
 }
-function resolve_collision(box_dynamic, box_static, velocity) {
-    if (Math.abs(velocity.x) > Math.abs(velocity.y)) {
-        check_x_velocity(box_dynamic, box_static, velocity);
-        if (collides(box_dynamic, box_static)) {
-            check_y_velocity(box_dynamic, box_static, velocity);
-        }
-    } else {
-        check_y_velocity(box_dynamic, box_static, velocity);
-        if (collides(box_dynamic, box_static)) {
-            check_x_velocity(box_dynamic, box_static, velocity);
-        }
-    }
-}
 
 function belongs_to(point, line) {
     var line_start_x = Math.min(line.x1, line.x2);
