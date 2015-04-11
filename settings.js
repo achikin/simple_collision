@@ -5,7 +5,7 @@ var hero = {
     speed : {
       v : {x:0, y:0},//velocity
       a : {x: 2, y: 20},//acceleration
-      d : {x: 0, y: 2},//deceleration
+      d : {x: 1, y: 2},//deceleration
       max : {x: 2, y: {up: 20, down: 2}}//max speed
     }
 }
