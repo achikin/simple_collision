@@ -1,15 +1,21 @@
+//TODO
+/*
+Add player setup sliders via input type="range" and float:left css
+Fix vertical speed < 1
+*/
 'use strict';
 var canvas = document.getElementById("example");
 var snd = new Audio("laser.mp3");
-
+var upPressed = false,
+    downPressed = false,
+    leftPressed = false,
+    rightPressed = false,
+    upStillPressed = false;
 function play_snd() {
     snd.currentTime = 0;
     snd.play();
 }
 function clamp_speed(current, max) {
-    //console.log('current' + current);
-    //console.log('max' + max);
-    //console.log('final ' + Math.min(Math.abs(current),max));
     return Math.min(Math.abs(current),max) * (current > 0 ? 1 : -1);
 }
 function clamp_y_speed(current, up, down) {
@@ -19,29 +25,46 @@ function clamp_y_speed(current, up, down) {
         return clamp_speed(current, up);
     }
 }
+function decelerate_x(player) {
+    if (hero.speed.v.x === 0) return;    
+    var direction = (hero.speed.v.x > 0) ? 1 : -1;
+    hero.speed.v.x = Math.abs(hero.speed.v.x) - hero.speed.d.x;
+    if (hero.speed.v.x <= 0) {
+        hero.speed.v.x = 0;
+    } else {
+        hero.speed.v.x = hero.speed.v.x * direction;
+    }
+}
+
+function decelerate_y(player) {
+    hero.speed.v.y += hero.speed.d.y;
+}
 function keydownUp() {
-  hero.speed.v.y -= hero.speed.a.y;
-  hero.speed.v.y = clamp_y_speed(hero.speed.v.y, hero.speed.max.y.up,       hero.speed.max.y.down);
-    console.log(hero.spee)
+  upPressed = true;
 }
 function keydownDown() {
 }
 function keydownLeft() {
-    hero.speed.v.x -= hero.speed.a.x;
-    //hero.speed.v.x = clamp_speed(hero.speed.v.x, hero.speed.max.x);
+    leftPressed = true;
 }
 function keydownRight() {
-    hero.speed.v.x += hero.speed.a.x;
-    //hero.speed.v.x = clamp_speed(hero.speed.v.x, hero.speed.max.x);
+    rightPressed = true;
 }
 
-function keyupLeft() {}
-function keyupRight() {}
+function keyupLeft() {
+    leftPressed = false;
+}
+function keyupRight() {
+    rightPressed = false;
+}
 function keydownZ() {}
 function keydownX() {}
 function keyupZ() {}
 function keyupX() {}
-function keyupUp() {}
+function keyupUp() {
+    upPressed = false;
+    upStillPressed = false;
+}
 function keyupDown() {}
 
 var keyMapDown = {
@@ -64,7 +87,7 @@ var keyMapUp = {
 var ctx = canvas.getContext("2d");
 
 var t_prev = 0;
-var objects = [{pos:{x:200,y:100}, w:100, h: 50}];
+var objects = [{pos:{x:200,y:210}, w:100, h: 50}];
 objects.push({pos:{x:10, y:300}, w:700, h:30});
 hero.pos.x = 20;
 hero.pos.y = 100;
@@ -88,26 +111,36 @@ function update(t) {
     ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
     var delta = t - t_prev;
     t_prev = t;
-    hero.speed.v.y += hero.speed.d.y;
-    hero.speed.v.y = clamp_y_speed(hero.speed.v.y, hero.speed.max.y.up, hero.speed.max.y.down);
-    console.log(hero.speed.v.y);
-    
-    var direction = (hero.speed.x > 0) ? 1 : -1;
-    hero.speed.v.x = Math.abs(hero.speed.v.x) - hero.speed.d.x;
-    if (hero.speed.v.x < 0) {
-        hero.speed.v.x = 0;
-    } else {
-        hero.speed.v.x *= direction;
+    if (hero.speed.v.y === 0) {
+        if (upPressed && !upStillPressed) {
+            upStillPressed = true;
+            hero.speed.v.y -= hero.speed.a.y;
+        }
     }
-    //console.log(hero.speed.v.x);
+    decelerate_y(hero);
+    
+    if (leftPressed) {
+        hero.speed.v.x -= hero.speed.a.x;
+    } else {
+        decelerate_x(hero);
+    }
+    if (rightPressed) {
+        hero.speed.v.x += hero.speed.a.x;
+    } else {
+        decelerate_x(hero);
+    }
     
     hero.speed.v.x = clamp_speed(hero.speed.v.x, hero.speed.max.x);
+    
+    hero.speed.v.y = clamp_y_speed(hero.speed.v.y, hero.speed.max.y.up, hero.speed.max.y.down);
 
-    //console.log('--------------------------');
+    
+
     hero.pos.x = hero.pos.x + hero.speed.v.x;
     for (var i = 0; i < objects.length; i++) {
       if (collides(hero, objects[i])) {
         check_x_velocity(hero, objects[i], hero.speed.v);
+        hero.speed.v.x = 0;
       }
     }
     
@@ -116,6 +149,10 @@ function update(t) {
     for (var i = 0; i < objects.length; i++) {
      if (collides(hero, objects[i])) {
        check_y_velocity(hero, objects[i], hero.speed.v);
+       hero.speed.v.y = 0;
+         console.log('yes');
+     } else {
+         console.log('no');
      }
     }
     
@@ -132,16 +169,14 @@ window.requestAnimationFrame(update);
 document.onkeydown = function (event) {
     if (keyMapDown[event.keyCode]) {
         keyMapDown[event.keyCode].call();
-    } else {
-        document.getElementById('key').innerHTML = event.keyCode;
     }
 };
  
 document.onkeyup = function (event) {
-        document.getElementById('key').innerHTML = 'up:' + event.keyCode;
     if (keyMapUp[event.keyCode]) {
         keyMapUp[event.keyCode].call();
-    } else {
-        document.getElementById('key').innerHTML = event.keyCode;
     }
 };
+canvas.onmousemove = function(event) {
+    document.getElementById('coords').innerHTML = event.clientX + ':' + event.clientY;
+}
