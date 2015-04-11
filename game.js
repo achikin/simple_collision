@@ -1,60 +1,40 @@
 'use strict';
 var canvas = document.getElementById("example");
 var snd = new Audio("laser.mp3");
+
 function play_snd() {
     snd.currentTime = 0;
     snd.play();
 }
-var hero = {
-    pos : {x: 0, y :0},
-    w:0,
-    h:0,
-    v : {x:0, y:0},
-    throttle: 1,
-    maxspeed: 1
+function clamp_speed(current, max) {
+    //console.log('current' + current);
+    //console.log('max' + max);
+    //console.log('final ' + Math.min(Math.abs(current),max));
+    return Math.min(Math.abs(current),max) * (current > 0 ? 1 : -1);
 }
-
 function keydownUp() {
-  hero.v.y -= 20;
-  if (Math.abs(hero.v.y) > 20) {
-     hero.v.y = 20 * (hero.v.y < 0)? -1:1;
-  }
+  hero.speed.v.y -= hero.speed.a.y;
+  hero.speed.v.y = clamp_speed(hero.speed.v.y, hero.speed.max.y);
 }
 function keydownDown() {
-  hero.v.y += hero.throttle;
-  if (Math.abs(hero.v.y) > hero.maxspeed) {
-     hero.v.y = hero.maxspeed * (hero.v.x < 0)? -1:1;
-  }
 }
 function keydownLeft() {
-    hero.v.x -= hero.throttle;
-    if (Math.abs(hero.v.x) > hero.maxspeed) {
-        hero.v.x = hero.maxspeed * (hero.v.x < 0)? -1:1;
-    }
+    hero.speed.v.x -= hero.speed.a.x;
+    hero.speed.v.x = clamp_speed(hero.speed.v.x, hero.speed.max.x);
 }
 function keydownRight() {
-    hero.v.x += hero.throttle;
-    if (Math.abs(hero.v.x) > hero.maxspeed) {
-        hero.v.x = hero.maxspeed * (hero.v.x < 0)? -1:1;
-    }
+    hero.speed.v.x += hero.speed.a.x;
+    hero.speed.v.x = clamp_speed(hero.speed.v.x, hero.speed.max.x);
 }
 
-function keyupLeft() {
-  hero.v.x = 0;
-}
-function keyupRight() {
-  hero.v.x = 0;
-}
-
+function keyupLeft() {}
+function keyupRight() {}
 function keydownZ() {}
 function keydownX() {}
 function keyupZ() {}
 function keyupX() {}
-function keyupUp(){
-}
-function keyupDown(){
-  hero.v.y = 0;
-}
+function keyupUp() {}
+function keyupDown() {}
 
 var keyMapDown = {
     38 : keydownUp,
@@ -74,9 +54,7 @@ var keyMapUp = {
     88 : keyupX
 };
 var ctx = canvas.getContext("2d");
-ctx.fillRect(0, 10, 3, 3);
-var x = 0;
-var vel = 0.1;
+
 var t_prev = 0;
 var objects = [{pos:{x:200,y:100}, w:100, h: 50}];
 objects.push({pos:{x:10, y:300}, w:700, h:30});
@@ -84,7 +62,7 @@ hero.pos.x = 20;
 hero.pos.y = 100;
 hero.w = 20;
 hero.h = 40;
-hero.v.y = 2;
+
 function draw_entity(ctx,entity) {
   ctx.strokeRect(entity.pos.x, entity.pos.y, entity.w, entity.h);
 }
@@ -94,7 +72,7 @@ function draw_v(ctx, entity) {
   ctx.beginPath();
   
   ctx.moveTo(centerx, centery);
-  ctx.lineTo(centerx + entity.v.x*10, centery + entity.v.y*10)
+  ctx.lineTo(centerx + entity.speed.v.x*10, centery + entity.speed.v.y*10)
   ctx.stroke();
 }
 
@@ -102,25 +80,43 @@ function update(t) {
     ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
     var delta = t - t_prev;
     t_prev = t;
-    hero.pos.x = hero.pos.x + hero.v.x;
+    hero.speed.v.y += 2;
+    hero.speed.v.y = clamp_speed(hero.speed.v.y, hero.speed.max.y);
+    var direction = hero.speed.x > 0 ? 1 : -1;
+    //console.log(hero.speed.v.x);
+    hero.speed.v.x = Math.abs(hero.speed.v.x) - hero.speed.a.x;
+    //console.log(hero.speed.v.x);
+    if (hero.speed.v.x < 0) {
+        hero.speed.v.x = 0;
+    } else {
+        hero.speed.v.x *= direction;
+    }
+    //console.log(hero.speed.v.x);
+    
+    hero.speed.v.x = clamp_speed(hero.speed.v.x, hero.speed.max.x);
+
+    //console.log('--------------------------');
+    hero.pos.x = hero.pos.x + hero.speed.v.x;
     for (var i = 0; i < objects.length; i++) {
       if (collides(hero, objects[i])) {
-        check_x_velocity(hero, objects[i], hero.v);
+        check_x_velocity(hero, objects[i], hero.speed.v);
       }
     }
-    hero.pos.y = hero.pos.y + hero.v.y;
+    
+    hero.pos.y = hero.pos.y + hero.speed.v.y;
+    
     for (var i = 0; i < objects.length; i++) {
      if (collides(hero, objects[i])) {
-       check_y_velocity(hero, objects[i], hero.v);
+       check_y_velocity(hero, objects[i], hero.speed.v);
      }
     }
+    
     for(var i = 0; i < objects.length; i++) {
       draw_entity(ctx, objects[i]);
     }
     draw_entity(ctx, hero);
     draw_v(ctx, hero);
-    hero.v.y += 2;
-    if (hero.v.y > 2) hero.v.y = 2;
+    
     window.requestAnimationFrame(update);
 }
 
